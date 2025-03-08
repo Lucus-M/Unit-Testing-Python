@@ -4,13 +4,13 @@ class Validate:
 
   @staticmethod
   def zip(input):
-    if re.match("^[0-9]{5}$", input):
+    if re.match("^[0-9]{5}$", input) and type(input) == str:
       return True
     return False
   
   @staticmethod
   def minor(age):
-    if age > 17:
+    if type(age) != int or age > 17 or age < 0:
       return False
     return True
   
@@ -80,31 +80,20 @@ class Validate:
     elif value > 90:
       return 'A'
   
-  '''
-  Typing added to enhance validation
-  '''
   @staticmethod
   def sanitize(sql : str) -> str:
-    sql = sql.upper().replace("ADMIN", "")
-    sql = sql.upper().replace("OR", "")
-    sql = sql.upper().replace("COLLATE", "")
-    sql = sql.upper().replace("DROP", "")
-    sql = sql.upper().replace("AND", "")
-    sql = sql.upper().replace("UNION", "")
-    sql = sql.replace("/*", "")
-    sql = sql.replace("*/", "")
-    sql = sql.replace("//", "")
-    sql = sql.replace(";", "")
-    sql = sql.replace("||", "")
-    sql = sql.replace("&&", "")
-    sql = sql.replace("--", "")
-    sql = sql.replace("#", "")
-    sql = sql.replace("=", "")
-    sql = sql.replace("!=", "")
-    sql = sql.replace("<>", "")
+    dangerous_patterns = [
+        r"(?i)(DROP|SELECT|UPDATE|DELETE|INSERT|UNION|OR|AND|COLLATE|ADMIN|--|\*/|/\*|;|#|\=|\!\=|\<\>|\|{2}|\&{2})",
+        r"--.*$",
+        r"/\*.*\*/",
+        r"(\s)NULL(\s)",
+    ]
 
-    return sql
+    for pattern in dangerous_patterns:
+        sql = re.sub(pattern, '', sql)
 
+    return sql.strip()
+  
   @staticmethod
   def strip_null(input : str) -> str:
     input = input.replace("None", "")
@@ -126,5 +115,6 @@ class Validate:
   @staticmethod
   def md5(input) -> bool:
       #validate 32 character md5 hash
+      input = input.lower()
       md5_pattern = r"^[a-f0-9]{32}$"
       return bool(re.match(md5_pattern, input))
