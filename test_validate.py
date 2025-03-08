@@ -203,13 +203,12 @@ class Test_TestValidate(unittest.TestCase):
         invalid_scores = [-1, "not a number", None]
         for score in invalid_scores:
             with self.subTest(score=score):
-                self.assertEqual(Validate.grade(score), 'F')  # If not valid, 'F' should be returned
+                self.assertEqual(Validate.grade(score), 'F') #return F if invalid
     
     # Test sanitize method (SQL sanitization)
     def test_sanitize_happy(self):
         sql_input = "SELECT * FROM users WHERE username = 'admin' OR 1=1"
         sanitized = Validate.sanitize(sql_input)
-        print(sanitized);
         self.assertNotIn("ADMIN", sanitized)  # "ADMIN" should be removed
         self.assertNotIn("OR", sanitized)  # "OR" should be removed
 
@@ -218,6 +217,51 @@ class Test_TestValidate(unittest.TestCase):
         input_str = "This is a None test."
         result = Validate.strip_null(input_str)
         self.assertNotIn("None", result)  # "None" should be removed from the string
+    
+    def test_ip_happy(self):
+        valid_ips = [
+            "192.168.1.1",
+            "0.0.0.0",
+            "255.255.255.255"
+        ]
+
+        for ip in valid_ips:
+            with self.subTest(ip=ip):
+                self.assertTrue(Validate.ip(ip))
+
+    def test_ip_abuse(self):
+        invalid_ips = [
+            "192.168.1.999",
+            "1a92.168.1.1",
+            "256.256.256.256",
+            "abc.def.ghi.jkl",
+            "192.168.1"
+        ]
+
+        for ip in invalid_ips:
+            with self.subTest(ip=ip):
+                self.assertFalse(Validate.ip(ip))
+    
+    def test_mac_happy(self):
+        self.assertTrue(Validate.mac("00:1A:2B:3C:4D:5E"))
+        self.assertTrue(Validate.mac("00-1A-2B-3C-4D-5E"))
+        self.assertTrue(Validate.mac("00 1A 2B 3C 4D 5E"))
+        self.assertTrue(Validate.mac("00 00 00 00 00 00"))
+    
+    def test_mac_abuse(self):
+        self.assertFalse(Validate.mac("00:1A:2B:3C:4D"))
+        self.assertFalse(Validate.mac("00:1A:2B:3C:4D:GG"))
+        self.assertFalse(Validate.mac("00 1A 2B 3C 4D 5E 6F"))
+        self.assertFalse(Validate.mac("001A2B3C4D5E"))
+
+    def test_md5_happy(self):
+        self.assertTrue(Validate.md5("d41d8cd98f00b204e9800998ecf8427e"))
+        self.assertTrue(Validate.md5("098f6bcd4621d373cade4e832627b4f6"))
+    
+    def test_md5_abuse(self):
+        self.assertFalse(Validate.md5("d41d8cd98f00b204e9800998ecf8427"))
+        self.assertFalse(Validate.md5("z41d8cd98f00b204e9800998ecf8427e"))
+        self.assertFalse(Validate.md5("d41d8cd98f00b204e9800998ecf8427ex"))
 
 if __name__ == '__main__':
     unittest.main()
