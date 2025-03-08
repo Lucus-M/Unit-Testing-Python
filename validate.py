@@ -111,25 +111,20 @@ class Validate:
 
     return input
 
-  '''
-  TODO: Implement IP validation. Consider white-list, regex.
-  '''
   @staticmethod
   def ip(input) -> bool:
-    return True
-  
-  '''
-  TODO: Implement MAC address validation. Consider white-list, regex.
+      #validate ipv4 address
+      ip_pattern = r"^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+      return bool(re.match(ip_pattern, input))
 
-  allow : - and whitespaces
-  '''
   @staticmethod
   def mac(input) -> bool:
-    return True
-  
-  '''
-  TODO: Implement md5 validation. Consider white-list, regex.
-  '''
+      #validate mac address, allow space colon and hypen
+      mac_pattern = r"^([0-9A-Fa-f]{2}[\s:-]){5}([0-9A-Fa-f]{2})$"
+      return bool(re.match(mac_pattern, input))
+
   @staticmethod
   def md5(input) -> bool:
-    return True
+      #validate 32 character md5 hash
+      md5_pattern = r"^[a-f0-9]{32}$"
+      return bool(re.match(md5_pattern, input))
