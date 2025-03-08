@@ -16,23 +16,23 @@ class Test_TestValidate(unittest.TestCase):
         f = open("blns.payloads", "rb")
 
         for line in f:
-            print(f"Attempting {line}")
+            #print(f"Attempting {line}")
             self.assertFalse(Validate.zip(str(line)))
     
     # Test the happy path for age validation (minor check)
     def test_minor_happy(self):
-        ages = [16, 17, 1, 4, 6, 2]  # These are minors, so they should return True
+        ages = [16, 17, 1, 4, 6, 2, 0]  # These are minors, so they should return True
         for age in ages:
             with self.subTest(age=age):
                 self.assertTrue(Validate.minor(age))
 
     # Test abuse cases for age validation (should not be minor)
     def test_minor_abuse(self):
-        ages = [18, 20, 65]
+        ages = [18, 20, 65, "33", "String", 39.4, -9]
         for age in ages:
             with self.subTest(age=age):
                 self.assertFalse(Validate.minor(age))
-    
+
     # Test the happy path for email validation
     def test_email_happy(self):
         valid_emails = [
@@ -70,30 +70,36 @@ class Test_TestValidate(unittest.TestCase):
             with self.subTest(email=email):
                 self.assertFalse(Validate.email(email))
 
+        f = open("blns.payloads", "rb")
+
+        for line in f:
+            #print(f"Attempting {line}")
+            self.assertFalse(Validate.email(str(line)))
+
     # Test the happy path for latitude validation
     def test_latitude_happy(self):
-        valid_latitudes = [-90, 0, 45, 90]  # Valid latitude values
+        valid_latitudes = [-90, 0, 45, 90, 89.9]  # Valid latitude values
         for lat in valid_latitudes:
             with self.subTest(lat=lat):
                 self.assertTrue(Validate.is_lat(lat))
 
     # Test abuse cases for latitude validation
     def test_latitude_abuse(self):
-        invalid_latitudes = [-91, 91, "not a number", None, "39", 300]  # Invalid latitudes
+        invalid_latitudes = [-91, 91, "not a number", None, "39", 300, -90.4, 90.1]  # Invalid latitudes
         for lat in invalid_latitudes:
             with self.subTest(lat=lat):
                 self.assertFalse(Validate.is_lat(lat))
 
     # Test the happy path for longitude validation
     def test_longitude_happy(self):
-        valid_longitudes = [-180, 0, 45, 180]  # Valid longitude values
+        valid_longitudes = [-180, 0, 45, 180, 179.9]  # Valid longitude values
         for lng in valid_longitudes:
             with self.subTest(lng=lng):
                 self.assertTrue(Validate.is_lng(lng))
 
     # Test abuse cases for longitude validation
     def test_longitude_abuse(self):
-        invalid_longitudes = [-181, 181, "not a number", None]  # Invalid longitudes
+        invalid_longitudes = [-181, 181, "not a number", None, 180.1, "39"]  # Invalid longitudes
         for lng in invalid_longitudes:
             with self.subTest(lng=lng):
                 self.assertFalse(Validate.is_lng(lng))
@@ -140,6 +146,12 @@ class Test_TestValidate(unittest.TestCase):
             with self.subTest(domain=domain):
                 self.assertFalse(Validate.is_domain(domain))
 
+        f = open("blns.payloads", "rb")
+
+        for line in f:
+            #print(f"Attempting {line}")
+            self.assertFalse(Validate.is_domain(str(line)))
+
     # Test the happy path for URL validation
     def test_url_happy(self):
         valid_urls = [
@@ -177,17 +189,25 @@ class Test_TestValidate(unittest.TestCase):
             "http://",             # Incomplete URL
             "www.example.net",     # Missing scheme ("http://")
             "ftp://example.com",    # Invalid scheme ("ftp" instead of "http(s)")
-            "http://example .org",
-            "http://example.com:abcd",
-            "http://example@com"
+            "http://example .org",  # space
+            "http://example.com:abcd", 
+            "http://example@com" # @
+            "aaaa" # aaaa
         ]
         for url in invalid_urls:
             with self.subTest(url=url):
                 self.assertFalse(Validate.is_url(url))
+        
+        f = open("blns.payloads", "rb")
+
+        for line in f:
+            #print(f"Attempting {line}")
+            self.assertFalse(Validate.is_url(str(line)))
 
     # Test the happy path for grade validation
     def test_grade_happy(self):
         valid_grades = {
+            0: 'F',
             59: 'F',
             65: 'D',
             75: 'C',
@@ -204,18 +224,26 @@ class Test_TestValidate(unittest.TestCase):
         for score in invalid_scores:
             with self.subTest(score=score):
                 self.assertEqual(Validate.grade(score), 'F') #return F if invalid
-    
-    # Test sanitize method (SQL sanitization)
-    def test_sanitize_happy(self):
-        sql_input = "SELECT * FROM users WHERE username = 'admin' OR 1=1"
+        
+        f = open("blns.payloads", "rb")
+
+        for line in f:
+            #print(f"Attempting {line}")
+            self.assertEqual(Validate.grade(str(line)), 'F')
+
+    def test_sanitize(self):
+        sql_input = "SELECT * FROM users WHERE username = 'admin' -- OR 1=1"
         sanitized = Validate.sanitize(sql_input)
+
+        #print(sanitized)
+        
         self.assertNotIn("ADMIN", sanitized)  # "ADMIN" should be removed
         self.assertNotIn("OR", sanitized)  # "OR" should be removed
 
-    # Test strip_null method
     def test_strip_null(self):
         input_str = "This is a None test."
         result = Validate.strip_null(input_str)
+        #print(result)
         self.assertNotIn("None", result)  # "None" should be removed from the string
     
     def test_ip_happy(self):
@@ -235,7 +263,7 @@ class Test_TestValidate(unittest.TestCase):
             "1a92.168.1.1",
             "256.256.256.256",
             "abc.def.ghi.jkl",
-            "192.168.1"
+            "192.168.1",
         ]
 
         for ip in invalid_ips:
@@ -247,6 +275,7 @@ class Test_TestValidate(unittest.TestCase):
         self.assertTrue(Validate.mac("00-1A-2B-3C-4D-5E"))
         self.assertTrue(Validate.mac("00 1A 2B 3C 4D 5E"))
         self.assertTrue(Validate.mac("00 00 00 00 00 00"))
+        self.assertTrue(Validate.mac("00 1a 2b 3c 4d 5e"))
     
     def test_mac_abuse(self):
         self.assertFalse(Validate.mac("00:1A:2B:3C:4D"))
@@ -254,14 +283,28 @@ class Test_TestValidate(unittest.TestCase):
         self.assertFalse(Validate.mac("00 1A 2B 3C 4D 5E 6F"))
         self.assertFalse(Validate.mac("001A2B3C4D5E"))
 
+        f = open("blns.payloads", "rb")
+
+        for line in f:
+            #print(f"Attempting {line}")
+            self.assertFalse(Validate.mac(str(line)))
+
     def test_md5_happy(self):
         self.assertTrue(Validate.md5("d41d8cd98f00b204e9800998ecf8427e"))
         self.assertTrue(Validate.md5("098f6bcd4621d373cade4e832627b4f6"))
+        self.assertTrue(Validate.md5("098F6BCD4621D373CADE4E832627B4F6"))
     
     def test_md5_abuse(self):
         self.assertFalse(Validate.md5("d41d8cd98f00b204e9800998ecf8427"))
         self.assertFalse(Validate.md5("z41d8cd98f00b204e9800998ecf8427e"))
         self.assertFalse(Validate.md5("d41d8cd98f00b204e9800998ecf8427ex"))
+        self.assertFalse(Validate.md5("098F6BCD4621D373CADE4E832627B4F6A"))
+
+        f = open("blns.payloads", "rb")
+
+        for line in f:
+            #print(f"Attempting {line}")
+            self.assertFalse(Validate.md5(str(line)))
 
 if __name__ == '__main__':
     unittest.main()
