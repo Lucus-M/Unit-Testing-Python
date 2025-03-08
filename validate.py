@@ -16,42 +16,69 @@ class Validate:
   
   @staticmethod 
   def email(input):
-    if "@" in input and "." in input:
+    pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9]+([.-][a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$", re.IGNORECASE)
+
+    if re.match(pattern, input):
+      print('match')
       return True
+    print('does not match')
     return False
   
   @staticmethod
   def is_lat(number):
+    if type(number) not in [int, float]:
+      return False
     return number >= -90 and number <= 90
   
   @staticmethod
   def is_lng(number):
+    if type(number) not in [int, float]:
+      return False
     return number >= -180 and number <= 180
   
   @staticmethod
   def is_domain(input):
-    if re.match("^[a-zA-Z0-9-]{2,253}\\.[a-zA-Z]{1}[a-zA-Z0-9]{1,}$", input):
-      return True
+    pattern = re.compile(
+      r'^(?!\-)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}$'
+    )
+    
+    # Match the input against the pattern
+    if re.match(pattern, input):
+        # Ensure domain length is between 1 and 253 characters
+        if 1 <= len(input) <= 253:
+            return True
     return False
   
   @staticmethod
   def is_url(input):
-    if re.match("^http(s)?:\\/\\/(.*?)\\.[a-z]{2,52}\\/.*$", input):
-      return True
+    pattern = re.compile(
+        r'^(https?://)'
+        r'([A-Za-z0-9-]+\.)*'
+        r'[A-Za-z0-9-]+'
+        r'(\.[A-Za-z]{2,})'
+        r'(:\d+)?'
+        r'(/[^?]*)?'
+        r'(\?[A-Za-z0-9&=._-]*)?'
+        r'(#\S*)?$'
+        , re.IGNORECASE
+    )
+    
+    if re.match(pattern, input):
+        return True
     return False
   
   @staticmethod
   def grade(value):
-    if value < 60:
+    if type(value) != int and type(value) != float or value < 60:
       return 'F'
-    elif value < 70:
+    if value < 70:
       return 'D'
     elif value < 80:
       return 'C'
     elif value < 90:
       return 'B'
-    
-    return 'A'
+    elif value > 90:
+      return 'A'
   
   '''
   Typing added to enhance validation
